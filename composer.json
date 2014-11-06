@@ -1,0 +1,25 @@
+{
+    "name": "devonzara/warden",
+    "description": "RBAC (Role-based Access Control) System for Laravel 5",
+    "keywords": ["laravel", "framework", "permission", "role", "rbac", "devonzara", "Devon Zara"],
+    "homepage":"https://github.com/devonzara/warden",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Devon Zara",
+            "email": "hello@devonzara.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "illuminate/support": "5.0.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Devonzara\\Warden\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
