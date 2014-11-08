@@ -62,6 +62,17 @@ class Warden {
 	}
 
 	/**
+	 * Assign the User to the specified Role.
+	 *
+	 * @param   $role  mixed  Accepts a Role, key, or id.
+	 * @return  mixed
+	 */
+	public function addRole($role)
+	{
+		return $this->getUser()->addRole($key);
+	}
+
+	/**
 	 * Find or create a User instance to work with.
 	 *
 	 * @return mixed

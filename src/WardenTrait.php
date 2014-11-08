@@ -80,10 +80,10 @@ trait WardenTrait {
 	}
 
 	/**
-	 * Assign the current user to the specified Role.
+	 * Assign the User to the specified Role.
 	 *
-	 * @param $role  mixed  Accepts a Role, key, or id.
-	 * @return mixed
+	 * @param   $role  mixed  Accepts a Role, key, or id.
+	 * @return  mixed
 	 */
 	public function addRole($role)
 	{
