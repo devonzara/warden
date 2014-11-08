@@ -1,5 +1,8 @@
 <?php namespace Devonzara\Warden;
 
+use Devonzara\Warden\Exceptions\RoleAlreadyAssignedException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+
 trait WardenTrait {
 
 	/**
@@ -28,7 +31,7 @@ trait WardenTrait {
 	{
 		$relation = $this->belongsToMany(Warden::config('role_model'));
 
-		return $relation->with('permissions');
+		return $relation->with('permissions')->withTimestamps();
 	}
 
 	/**
@@ -44,7 +47,7 @@ trait WardenTrait {
 			Warden::config('permission_pivot_table')
 		);
 
-		return $relation->withPivot('value');
+		return $relation->withPivot('value')->withTimestamps();
 	}
 
 	/**
@@ -74,6 +77,72 @@ trait WardenTrait {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Assign the current user to the specified Role.
+	 *
+	 * @param $role  mixed  Accepts a Role, key, or id.
+	 * @return mixed
+	 */
+	public function addRole($role)
+	{
+		if ($role instanceof Model) return $this->addRoleFromModel($role);
+
+		$column = is_string($role) ? 'key' : 'id';
+
+		return $this->addRoleFromColumn($column, $role);
+	}
+
+	/**
+	 * Assign the current user to the specified Role model.
+	 *
+	 * @param $role
+	 * @return mixed
+	 * @throws ModelNotFoundException
+	 * @throws RoleAlreadyAssignedException
+	 */
+	protected function addRoleFromModel($role)
+	{
+		if ( ! $role->exists)
+		{
+			throw (new ModelNotFoundException)->setModel(get_class($role));
+		}
+
+		if ($this->roles->contains($role->id))
+		{
+			throw (new RoleAlreadyAssignedException)->setModels($this, $role);
+		}
+
+		return $this->saveRole($role->getKey());
+	}
+
+	/**
+	 * Find a matching Role and assign the current user to it.
+	 *
+	 * @param $column
+	 * @param $value
+	 * @return mixed
+	 */
+	protected function addRoleFromColumn($column, $value)
+	{
+		$model = Warden::config('role_model');
+		$role = new $model;
+
+		$role = $role->where($column, $value)->firstOrFail();
+
+		return $this->addRoleFromModel($role);
+	}
+
+	/**
+	 * Assign the User to the specified Role id.
+	 *
+	 * @param $id
+	 * @return mixed
+	 */
+	protected function saveRole($id)
+	{
+		return $this->roles()->attach($id);
 	}
 
 	/**
