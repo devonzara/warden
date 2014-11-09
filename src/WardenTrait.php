@@ -83,24 +83,33 @@ trait WardenTrait {
 	 * Assign the User to the specified Role.
 	 *
 	 * @param   $role  mixed  Accepts a Role, key, or id.
-	 * @return  mixed
+	 * @return  void
+	 * @throws  \Illuminate\Database\Eloquent\ModelNotFoundException
 	 */
 	public function addRole($role)
 	{
-		if ($role instanceof Model) return $this->addRoleFromModel($role);
+		if ( ! $this->exists)
+		{
+			throw (new ModelNotFoundException)->setModel(get_class($this));
+		}
 
-		$column = is_string($role) ? 'key' : 'id';
-
-		return $this->addRoleFromColumn($column, $role);
+		if ($role instanceof Model)
+		{
+			$this->addRoleFromModel($role);
+		}
+		else
+		{
+			$this->addRoleFromColumn($role);
+		}
 	}
 
 	/**
 	 * Assign the current user to the specified Role model.
 	 *
 	 * @param $role
-	 * @return mixed
-	 * @throws ModelNotFoundException
-	 * @throws RoleAlreadyAssignedException
+	 * @return void
+	 * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+	 * @throws \Devonzara\Warden\Exceptions\RoleAlreadyAssignedException
 	 */
 	protected function addRoleFromModel($role)
 	{
@@ -114,35 +123,40 @@ trait WardenTrait {
 			throw (new RoleAlreadyAssignedException)->setModels($this, $role);
 		}
 
-		return $this->saveRole($role->getKey());
+		$this->saveRole($role->getKey());
 	}
 
 	/**
 	 * Find a matching Role and assign the current user to it.
 	 *
-	 * @param $column
 	 * @param $value
-	 * @return mixed
+	 * @return void
 	 */
-	protected function addRoleFromColumn($column, $value)
+	protected function addRoleFromColumn($value)
 	{
+		$column = is_string($value) ? 'key' : 'id';
+
 		$model = Warden::config('role_model');
 		$role = new $model;
 
 		$role = $role->where($column, $value)->firstOrFail();
 
-		return $this->addRoleFromModel($role);
+		$this->addRoleFromModel($role);
 	}
 
 	/**
 	 * Assign the User to the specified Role id.
 	 *
 	 * @param $id
-	 * @return mixed
+	 * @return void
 	 */
 	protected function saveRole($id)
 	{
-		return $this->roles()->attach($id);
+		// Attach the Role to the User.
+		$this->roles()->attach($id);
+
+		// Update the collection of Roles.
+		$this->load('roles');
 	}
 
 	/**

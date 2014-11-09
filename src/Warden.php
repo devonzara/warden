@@ -65,11 +65,11 @@ class Warden {
 	 * Assign the User to the specified Role.
 	 *
 	 * @param   $role  mixed  Accepts a Role, key, or id.
-	 * @return  mixed
+	 * @return  void
 	 */
 	public function addRole($role)
 	{
-		return $this->getUser()->addRole($key);
+		$this->getUser()->addRole($role);
 	}
 
 	/**
