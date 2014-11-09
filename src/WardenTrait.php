@@ -18,8 +18,9 @@ trait WardenTrait {
 	 * @var array
 	 */
 	protected $magicPrefixes = [
-		'may' => 'may',
-		'is'  => 'hasRole'
+		'mayNot' => 'mayNot',
+		'may'    => 'may',
+		'is'     => 'hasRole'
 	];
 
 	/**
@@ -62,7 +63,7 @@ trait WardenTrait {
 	}
 
 	/**
-	 * Determine if the user has the specified permission.
+	 * Determine if the user may perform the specified action.
 	 *
 	 * @param $key
 	 * @return bool
@@ -77,6 +78,17 @@ trait WardenTrait {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Determine if the user may not perform the specified action.
+	 *
+	 * @param $key
+	 * @return bool
+	 */
+	public function mayNot($key)
+	{
+		return ! $this->may($key);
 	}
 
 	/**
@@ -351,7 +363,7 @@ trait WardenTrait {
 	/**
 	 * This is the place where dreams come true... No, it's not Disney
 	 * World. Here's where we're able to resolve magic method calls.
-	 * Examples: isModerator(), isOwner(), and mayAccessAdmin().
+	 * Examples: isOwner(), mayAccessAdmin(), mayNotAccessSite()
 	 *
 	 * @param $method
 	 * @param $parameters
@@ -362,7 +374,9 @@ trait WardenTrait {
 		// Resolve magic method calls.
 		foreach ($this->getMagicPrefixes() as $prefix => $forward)
 		{
-			if (starts_with($method, $prefix))
+			$startsWithUpper = ctype_upper(substr($method, strlen($prefix), 1));
+
+			if ($startsWithUpper && starts_with($method, $prefix))
 			{
 				return $this->$forward(
 					snake_case(substr($method, strlen($prefix)))

@@ -132,7 +132,7 @@ class Warden {
 	/**
 	 * This is the place where dreams come true... No, it's not Disney
 	 * World. Here's where we're able to resolve magic method calls.
-	 * Examples: isModerator(), isOwner(), and mayAccessAdmin().
+	 * Examples: isOwner(), mayAccessAdmin(), mayNotAccessSite()
 	 *
 	 * @param $method
 	 * @param $parameters
