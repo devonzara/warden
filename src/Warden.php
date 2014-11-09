@@ -31,26 +31,6 @@ class Warden {
 	}
 
 	/**
-	 * Return a Collection of Roles
-	 *
-	 * @return mixed
-	 */
-	public function getRolesCollection()
-	{
-		return $this->getUser()->roles;
-	}
-
-	/**
-	 * Return an array of our roles.
-	 *
-	 * @return mixed
-	 */
-	public function getRoles()
-	{
-		return $this->getRolesCollection()->attributesToArray();
-	}
-
-	/**
 	 * Determine if the current user belong to the specified role.
 	 *
 	 * @param $key
@@ -64,10 +44,11 @@ class Warden {
 	/**
 	 * Assign the User to the specified Role.
 	 *
-	 * @param   $role  mixed  Accepts a Role, key, or id.
+	 * @param mixed $role   Accepts a Role, key, or id.
+	 * @param bool  $reload To reload the model after adding the role or not.
 	 * @return  void
 	 */
-	public function addRole($role)
+	public function addRole($role, $reload = true)
 	{
 		$this->getUser()->addRole($role);
 	}

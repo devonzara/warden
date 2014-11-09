@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 trait WardenTrait {
 
 	/**
-	 * Cached list of permissions.
+	 * Cached list of the evaluated permissions.
 	 *
-	 * @var array $warden
+	 * @var array $permissionsCache
 	 */
-	protected $warden;
+	protected $permissionsCache;
 
 	/**
 	 * An array to map the magic method calls.
@@ -54,12 +54,20 @@ trait WardenTrait {
 	/**
 	 * Determine if the user belongs to the specified role.
 	 *
-	 * @param $role
+	 * @param        $role
+	 * @param string $column
 	 * @return bool
 	 */
-	public function hasRole($role)
+	public function hasRole($role, $column = 'key')
 	{
-		return $this->in_arrayi($role, $this->getRolesList());
+		if ($role instanceof Model) $role = $role->$column;
+
+		foreach ($this->roles as $item)
+		{
+			if (! strcasecmp($item->$column, $role)) return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -94,11 +102,11 @@ trait WardenTrait {
 	/**
 	 * Assign the User to the specified Role.
 	 *
-	 * @param   $role  mixed  Accepts a Role, key, or id.
+	 * @param mixed $role   Accepts a Role, key, or id.
+	 * @param bool  $reload To reload the model after adding the role or not.
 	 * @return  void
-	 * @throws  \Illuminate\Database\Eloquent\ModelNotFoundException
 	 */
-	public function addRole($role)
+	public function addRole($role, $reload = true)
 	{
 		if ( ! $this->exists)
 		{
@@ -107,11 +115,11 @@ trait WardenTrait {
 
 		if ($role instanceof Model)
 		{
-			$this->addRoleFromModel($role);
+			$this->addRoleFromModel($role, $reload);
 		}
 		else
 		{
-			$this->addRoleFromColumn($role);
+			$this->addRoleFromColumn($role, $reload);
 		}
 	}
 
@@ -119,11 +127,10 @@ trait WardenTrait {
 	 * Assign the current user to the specified Role model.
 	 *
 	 * @param $role
+	 * @param $reload
 	 * @return void
-	 * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
-	 * @throws \Devonzara\Warden\Exceptions\RoleAlreadyAssignedException
 	 */
-	protected function addRoleFromModel($role)
+	protected function addRoleFromModel($role, $reload)
 	{
 		if ( ! $role->exists)
 		{
@@ -135,16 +142,17 @@ trait WardenTrait {
 			throw (new RoleAlreadyAssignedException)->setModels($this, $role);
 		}
 
-		$this->saveRole($role->getKey());
+		$this->saveRole($role->getKey(), $reload);
 	}
 
 	/**
 	 * Find a matching Role and assign the current user to it.
 	 *
 	 * @param $value
+	 * @param $reload
 	 * @return void
 	 */
-	protected function addRoleFromColumn($value)
+	protected function addRoleFromColumn($value, $reload)
 	{
 		$column = is_string($value) ? 'key' : 'id';
 
@@ -153,22 +161,23 @@ trait WardenTrait {
 
 		$role = $role->where($column, $value)->firstOrFail();
 
-		$this->addRoleFromModel($role);
+		$this->addRoleFromModel($role, $reload);
 	}
 
 	/**
 	 * Assign the User to the specified Role id.
 	 *
 	 * @param $id
+	 * @param $reload
 	 * @return void
 	 */
-	protected function saveRole($id)
+	protected function saveRole($id, $reload)
 	{
 		// Attach the Role to the User.
 		$this->roles()->attach($id);
 
 		// Update the collection of Roles.
-		$this->load('roles');
+		if ($reload) $this->load('roles');
 	}
 
 	/**
@@ -180,30 +189,18 @@ trait WardenTrait {
 	 */
 	protected function buildPermissionsCache()
 	{
-		if (isset($this->warden)) return;
+		if (isset($this->permissionsCache)) return;
 
-		$this->parseRoles();
-
-		sort($this->warden['roles']);
-		sort($this->warden['permissions']);
-	}
-
-	/**
-	 * Create an array of all roles linked to this user.
-	 *
-	 * @return bool
-	 */
-	protected function parseRoles()
-	{
-		$this->warden['roles'] = $this->warden['permissions'] = [];
+		$this->permissionsCache = [];
 
 		foreach ($this->roles as $role)
 		{
-			$this->cacheRole($role->key);
 			$this->parsePermissions(
 				$role->key, $role->permissions, $role->weight
 			);
 		}
+
+		sort($this->permissionsCache);
 	}
 
 	/**
@@ -255,15 +252,13 @@ trait WardenTrait {
 	}
 
 	/**
-	 * Getter method for the rolesList array.
+	 * Return an array of our roles.
 	 *
 	 * @return mixed
 	 */
-	public function getRolesList($checkCache = true)
+	public function getRoles()
 	{
-		if ($checkCache) $this->buildPermissionsCache();
-
-		return $this->warden['roles'];
+		return $this->roles;
 	}
 
 	/**
@@ -275,7 +270,7 @@ trait WardenTrait {
 	{
 		if ($checkCache) $this->buildPermissionsCache();
 
-		return $this->warden['permissions'];
+		return $this->permissionsCache;
 	}
 
 	/**
@@ -289,7 +284,7 @@ trait WardenTrait {
 	{
 		if ($checkCache) $this->buildPermissionsCache();
 
-		return isset($this->warden['permissions'][$key]) ?: false;
+		return isset($this->permissionsCache[$key]) ?: false;
 	}
 
 	/**
@@ -306,16 +301,6 @@ trait WardenTrait {
 	}
 
 	/**
-	 * Cache a role.
-	 *
-	 * @param $key
-	 */
-	protected function cacheRole($key)
-	{
-		$this->warden['roles'][$key] = $key;
-	}
-
-	/**
 	 * Cache the given permission.
 	 *
 	 * @param $key
@@ -326,7 +311,7 @@ trait WardenTrait {
 	protected function cachePermission($key, $name, $value, $weight, $source)
 	{
 		$blah = null;
-		$this->warden['permissions'][$key] = [
+		$this->permissionsCache[$key] = [
 			'key'    => $key,
 			'name'   => $name,
 			'value'  => $value,
@@ -343,21 +328,6 @@ trait WardenTrait {
 	public function getMagicPrefixes()
 	{
 		return $this->magicPrefixes;
-	}
-
-	/**
-	 * Case insensitive in_array.
-	 *
-	 * @param       $needle
-	 * @param array $haystack
-	 * @param bool  $strict
-	 * @return bool
-	 */
-	public function in_arrayi($needle, array $haystack, $strict = false)
-	{
-		return in_array(
-			strtolower($needle), array_map('strtolower', $haystack), $strict
-		);
 	}
 
 	/**
