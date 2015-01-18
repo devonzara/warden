@@ -3,7 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreatePermissionTaggablesTable extends Migration {
+class CreatePermissionEntitiesTable extends Migration {
 
 	/**
 	 * Run the migrations.
@@ -12,7 +12,7 @@ class CreatePermissionTaggablesTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('permission_taggables', function(Blueprint $table)
+		Schema::create('permission_entities', function(Blueprint $table)
 		{
 			$table->increments('id');
 			$table->integer('permission_id')->unsigned();
