@@ -27,7 +27,7 @@ class Warden {
 	 */
 	public static function config($key)
 	{
-		return app('config')->get("warden::{$key}");
+		return app('config')->get("warden::config.{$key}");
 	}
 
 	/**

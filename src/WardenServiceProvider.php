@@ -18,7 +18,10 @@ class WardenServiceProvider extends ServiceProvider {
 	 */
 	public function register()
 	{
-		$this->package('devonzara/warden', 'warden', __DIR__);
+		// Load the config for now..
+		// todo: Implement L5 best practice for loading config
+		$config = $this->app['files']->getRequire(__DIR__ .'/config/config.php');
+		$this->app['config']->set('warden::config', $config);
 
 		$this->app->bind('warden', 'Devonzara\Warden\Warden');
 	}
