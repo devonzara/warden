@@ -1,6 +1,6 @@
 ## Warden
 
-> **Note:** This project is currently unstable and under heavy development.
+> **Note:** This project is no longer in development.
 
 Warden is a role-based access control ([RBAC](http://en.wikipedia.org/wiki/Role-based_access_control)) system for [Laravel 5](http://laravel.com) and it's [Eloquent ORM](http://laravel.com/docs/eloquent).
 
